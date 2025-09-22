@@ -8,7 +8,7 @@ export default function QuizPage(){
       <p className="small muted">Prueba: arrastra el término a su definición correcta</p>
 
       <div style={{marginTop:18}}>
-        <DragDropQuiz />
+        <DragDropQuiz/>
       </div>
     </section>
   );
