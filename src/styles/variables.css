@@ -1,0 +1,8 @@
+:root {
+  --primary: #C30A19;   /* Rojo institucional */
+  --bg: #FFFFFF;        /* Fondo blanco */
+  --text-dark: #333333; /* Texto gris oscuro */
+  --text-muted: #666666;/* Texto gris medio */
+  --card-bg: #FFFFFF;   /* Fondo tarjetas */
+  --border: #e6e6e6;    /* Borde sutil */
+}

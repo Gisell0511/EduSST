@@ -1,0 +1,7 @@
+@import './variables.css';
+.quiz-grid{display:grid;grid-template-columns:1fr;gap:18px}
+.quiz-card{padding:18px;border-radius:12px;background:var(--card-bg)}
+.option{padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:all .18s}
+.option:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(2,6,23,0.5)}
+.option.correct{background:linear-gradient(90deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06));border-color:rgba(16,185,129,0.25)}
+.option.incorrect{background:linear-gradient(90deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02));border-color:rgba(239,68,68,0.2)}

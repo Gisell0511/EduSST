@@ -1,0 +1,22 @@
+@import './variables.css';
+/* layout: sidebar + content */
+.sidebar{
+  width:260px;
+  padding:18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-right:1px solid rgba(255,255,255,0.03);
+  min-height:100vh;
+  position:sticky;top:0;
+}
+.sidebar .profile{display:flex;gap:12px;align-items:center;padding:8px 0 18px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.avatar{
+  width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--pca-blue), #064a7c);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff
+}
+.username{font-weight:700}
+.points-bubble{background:var(--glass);padding:6px 10px;border-radius:999px;font-weight:700;color:var(--accent)}
+.nav{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.nav .nav-item{padding:10px;border-radius:10px;display:flex;align-items:center;gap:10px;color:var(--muted);cursor:pointer;transition:all .12s ease}
+.nav .nav-item:hover{background:rgba(255,255,255,0.02);color:var(--accent);transform:translateX(4px)}
+.content-area{flex:1;padding:28px}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.section-title{font-size:1.2rem;color:var(--pca-blue);font-weight:700}

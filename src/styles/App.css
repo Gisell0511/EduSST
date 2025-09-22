@@ -1,0 +1,133 @@
+/* Base and layout */
+:root{
+  --bg-1: #0f1724;
+  --card: #111827;
+  --muted: #94a3b8;
+  --accent: #f59e0b; /* amber */
+  --primary: #2563eb; /* blue */
+  --success: #10b981;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  background: linear-gradient(180deg, #071021 0%, #0b1220 100%);
+  color:#e6eef8;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:40px 20px;
+}
+
+/* app container */
+.app-root{
+  width:100%;
+  max-width:1100px;
+}
+
+/* header */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  color:var(--muted);
+}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo-square{
+  width:56px;height:56px;border-radius:10px;
+  background:linear-gradient(135deg,#0ea5a9,#065f46);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:white;font-size:18px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+}
+.title{font-weight:700;color:#dbeafe;font-size:1.05rem}
+.subtitle{font-size:0.82rem;color:var(--muted)}
+.header-right{display:flex;align-items:center;gap:12px}
+.points{background:#0b1220;border:1px solid rgba(255,255,255,0.03);padding:8px 12px;border-radius:10px}
+.reset-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+
+/* main container */
+.main-container{display:grid;grid-template-columns:1fr;gap:18px}
+
+/* card common */
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+}
+
+/* Home card */
+.home-card .card-title{font-size:1.25rem;color:var(--accent);margin-bottom:8px}
+.home-card .card-desc{color:var(--muted);margin-bottom:16px}
+.home-actions{display:flex;gap:12px;align-items:center}
+.primary-btn{background:var(--primary);color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+.primary-btn:hover{filter:brightness(1.05)}
+
+/* Levels */
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.level-tile{padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03));display:flex;flex-direction:column;justify-content:space-between;min-height:110px}
+.level-number{font-weight:700;color:#c7d2fe}
+.level-title{font-size:1rem;color:#dbeafe;margin-top:6px}
+.locked .level-title{opacity:0.6}
+.primary-small{background:var(--primary);color:white;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+.locked-label{color:var(--muted)}
+
+/* Lesson */
+.lesson-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.small-muted{font-size:0.82rem;color:var(--muted)}
+.lesson-stats .muted{color:var(--muted);font-size:0.85rem}
+
+/* Progress bar */
+.progress-wrap{margin:12px 0}
+.progress-track{background:rgba(255,255,255,0.03);height:10px;border-radius:8px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent), #f97316);width:0;transition:width 0.4s ease}
+
+/* question card */
+.question-card .question{font-weight:600;font-size:1.05rem;margin-bottom:12px;color:#e6eef8}
+.options{display:grid;gap:10px}
+.option{
+  background:#0f1724;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;color:#e6eef8;text-align:left;cursor:pointer;
+  transition:all 0.18s ease;
+}
+.option:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(2,6,23,0.45)}
+.option.active{outline:2px solid rgba(37,99,235,0.25)}
+.option.correct{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3)}
+.option.incorrect{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25)}
+.option.disabled{opacity:0.6;cursor:not-allowed}
+
+/* result */
+.result-card .card-title{color:var(--accent);font-size:1.25rem}
+.result-body p{margin:8px 0;color:#dbeafe}
+.result-actions{margin-top:12px}
+
+/* small utilities */
+.muted{color:var(--muted)}
+.small{font-size:0.85rem;color:var(--muted)}
+
+/* Login */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  gap: 6px;
+}
+.login-form input {
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  background: #0b1220;
+  color: white;
+}
+.login-form .error {
+  color: #ef4444;
+  font-size: 0.85rem;
+}

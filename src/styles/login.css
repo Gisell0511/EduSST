@@ -1,0 +1,23 @@
+@import './variables.css';
+/* login layout */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:40px}
+.login-card{width:100%;max-width:980px;display:flex;gap:24px;align-items:stretch}
+.login-left{flex:1;padding:36px;border-radius:12px;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.45));display:flex;flex-direction:column;justify-content:center;gap:16px;position:relative;overflow:hidden}
+.brand{
+  display:flex;align-items:center;gap:12px;
+}
+.logo-square{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--pca-blue), #064a7c);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px;box-shadow:0 6px 18px rgba(3,10,28,0.6)}
+.h1{font-size:1.6rem;color:var(--accent);font-weight:700}
+.hint{color:var(--muted);font-size:0.95rem}
+/* animated gradient stripe */
+.gradient-stripe{position:absolute;right:-80px;top:-40px;width:260px;height:260px;border-radius:40%;background:linear-gradient(45deg,var(--pca-red),var(--pca-yellow));opacity:0.08;transform:rotate(22deg);filter:blur(24px)}
+.login-right{width:420px;padding:28px;border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;justify-content:center;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:8px}
+.input{
+  padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6eef8;outline:none;
+  transition:box-shadow .18s ease;
+}
+.input:focus{box-shadow:0 6px 18px rgba(1,86,128,0.18);border-color:rgba(255,209,0,0.18)}
+.login-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.link-small{color:var(--muted);font-size:0.9rem}
+.btn-wide{min-width:160px}
