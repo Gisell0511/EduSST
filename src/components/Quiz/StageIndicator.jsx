@@ -1,9 +1,17 @@
 export default function StageIndicator({ stage, totalStages }) {
   return (
-    <div className="flex justify-center mb-4">
-      <span className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-500 text-white rounded-lg shadow-md">
+    <div className="stage-indicator">
+      <div className="stage-text">
         Etapa {stage} / {totalStages}
-      </span>
+      </div>
+      <div className="stage-dots">
+        {Array.from({ length: totalStages }, (_, i) => (
+          <div 
+            key={i} 
+            className={`stage-dot ${i < stage ? 'active' : ''}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }

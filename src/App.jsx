@@ -13,12 +13,15 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" replace />} >
+      
+      {/* Rutas protegidas con layout Dashboard */}
+      <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" replace />}>
         <Route index element={<SupportMaterials />} />
         <Route path="materials" element={<SupportMaterials />} />
         <Route path="quiz" element={<QuizPage />} />
         <Route path="progress" element={<ProgressPage />} />
       </Route>
+      
       <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
     </Routes>
   );

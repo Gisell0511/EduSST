@@ -13,6 +13,7 @@ const QuizContainer = ({ onFinish }) => {
 
   const handleAnswer = (isCorrect) => {
     if (isCorrect) setScore(score + 1);
+    
     if (current + 1 < quizData.length) {
       setCurrent(current + 1);
     } else {
@@ -26,11 +27,10 @@ const QuizContainer = ({ onFinish }) => {
   }
 
   return (
-    <div className="quiz-container p-6 bg-gray-900 text-white rounded-lg">
+    <div className="quiz-container">
       <StageIndicator current={current + 1} total={quizData.length} />
       <ProgressBar current={current + 1} total={quizData.length} />
       <Timer seconds={60} onTimeout={() => setFinished(true)} />
-
       <QuizQuestion data={quizData[current]} onAnswer={handleAnswer} />
     </div>
   );

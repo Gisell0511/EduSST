@@ -1,14 +1,31 @@
 const QuizResults = ({ score, total }) => {
+  const percentage = (score / total) * 100;
+  const isExcellent = percentage >= 80;
+  const isGood = percentage >= 60;
+
   return (
-    <div className="text-center p-6">
-      <h2 className="text-2xl font-bold mb-4">🎉 ¡Has terminado el examen!</h2>
-      <p className="text-xl mb-6">Tu puntaje: {score} / {total}</p>
-      <button
-        onClick={() => window.location.href = "/dashboard"}
-        className="bg-blue-600 px-4 py-2 text-white rounded shadow hover:bg-blue-700"
-      >
-        Volver al Dashboard
-      </button>
+    <div className="quiz-results">
+      <div className="results-header">
+        <h2>🎉 ¡Has terminado el examen!</h2>
+        <div className={`score-badge ${isExcellent ? 'excellent' : isGood ? 'good' : 'needs-improvement'}`}>
+          {score} / {total}
+        </div>
+      </div>
+      
+      <div className="results-message">
+        {isExcellent ? '¡Excelente trabajo!' : 
+         isGood ? 'Buen trabajo, sigue mejorando' : 
+         'Sigue practicando, lo lograrás'}
+      </div>
+      
+      <div className="results-actions">
+        <button 
+          onClick={() => window.location.href = "/dashboard"} 
+          className="btn btn-primary"
+        >
+          Volver al Dashboard
+        </button>
+      </div>
     </div>
   );
 };

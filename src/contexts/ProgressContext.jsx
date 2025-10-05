@@ -1,50 +1,58 @@
-import { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useContext } from 'react';
 
-// Creamos el contexto
-export const ProgressContext = createContext();
+const ProgressContext = createContext();
 
 export function ProgressProvider({ children }) {
   const [progress, setProgress] = useState({
-    materialsViewed: [],   // IDs de materiales que ya vio
-    quizzesCompleted: {},  // { quizId: score }
-    percentage: 0,         // % de avance total
+    completedStages: 1,
+    totalStages: 4,
+    currentStage: 2,
+    totalPoints: 1250,
+    completedQuizzes: 3
   });
 
-  // Ejemplo: cargar progreso guardado en localStorage o API
-  useEffect(() => {
-    const stored = localStorage.getItem("progress");
-    if (stored) {
-      setProgress(JSON.parse(stored));
-    }
-  }, []);
-
-  // Guardar en localStorage cada vez que cambie
-  useEffect(() => {
-    localStorage.setItem("progress", JSON.stringify(progress));
-  }, [progress]);
-
-  // Funciones para actualizar el progreso
-  const markMaterialAsViewed = (materialId) => {
-    if (!progress.materialsViewed.includes(materialId)) {
-      setProgress((prev) => ({
-        ...prev,
-        materialsViewed: [...prev.materialsViewed, materialId],
-      }));
-    }
+  const addPoints = (points) => {
+    setProgress(prev => ({
+      ...prev,
+      totalPoints: prev.totalPoints + points
+    }));
   };
 
-  const completeQuiz = (quizId, score) => {
-    setProgress((prev) => ({
+  const completeStage = (stageId) => {
+    setProgress(prev => ({
       ...prev,
-      quizzesCompleted: { ...prev.quizzesCompleted, [quizId]: score },
+      completedStages: prev.completedStages + 1,
+      currentStage: stageId + 1
+    }));
+  };
+
+  const addCompletedQuiz = () => {
+    setProgress(prev => ({
+      ...prev,
+      completedQuizzes: prev.completedQuizzes + 1
     }));
   };
 
   return (
-    <ProgressContext.Provider
-      value={{ progress, markMaterialAsViewed, completeQuiz }}
-    >
+    <ProgressContext.Provider value={{
+      progress,
+      totalPoints: progress.totalPoints,
+      completedQuizzes: progress.completedQuizzes,
+      addPoints,
+      completeStage,
+      addCompletedQuiz
+    }}>
       {children}
     </ProgressContext.Provider>
   );
 }
+
+export function useProgress() {
+  const context = useContext(ProgressContext);
+  if (!context) {
+    throw new Error('useProgress must be used within a ProgressProvider');
+  }
+  return context;
+}
+
+export { ProgressContext };

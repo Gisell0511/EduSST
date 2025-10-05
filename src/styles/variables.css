@@ -5,4 +5,11 @@
   --text-muted: #666666;/* Texto gris medio */
   --card-bg: #FFFFFF;   /* Fondo tarjetas */
   --border: #e6e6e6;    /* Borde sutil */
+  
+  /* Variables adicionales necesarias */
+  --sidebar-width: 250px;
+  --header-height: 70px;
+  --border-radius: 12px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
 }

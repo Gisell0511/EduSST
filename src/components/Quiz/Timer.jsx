@@ -9,16 +9,24 @@ export default function Timer({ duration, onTimeUp }) {
       return;
     }
 
-    const timerId = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+    const timer = setTimeout(() => {
+      setTimeLeft(timeLeft - 1);
     }, 1000);
 
-    return () => clearInterval(timerId);
+    return () => clearTimeout(timer);
   }, [timeLeft, onTimeUp]);
 
   return (
-    <div className="text-center font-bold text-lg">
-      ⏳ {timeLeft}s
+    <div className="timer">
+      <div className="timer-text">
+        Tiempo restante: {timeLeft}s
+      </div>
+      <div className="timer-bar">
+        <div 
+          className="timer-progress" 
+          style={{ width: `${(timeLeft / duration) * 100}%` }}
+        />
+      </div>
     </div>
   );
 }
