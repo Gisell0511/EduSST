@@ -278,3 +278,85 @@
     font-size: 1.4rem;
   }
 }
+
+/* ===== SISTEMA DE NIVELES MÍNIMO ===== */
+.levels-quick-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.level-quick-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+}
+
+.level-quick-item:not(.locked):hover {
+  background: rgba(195, 10, 25, 0.05);
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+
+.level-quick-item.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.level-quick-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(195, 10, 25, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.level-quick-item.locked .level-quick-icon {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-muted);
+}
+
+.level-quick-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-quick-name {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.level-quick-score {
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
+  background: rgba(195, 10, 25, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Responsive para niveles */
+@media (max-width: 768px) {
+  .level-quick-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .level-quick-score {
+    align-self: flex-end;
+  }
+}
+

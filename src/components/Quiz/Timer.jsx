@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+// Timer.jsx
+import React, { useState, useEffect, useCallback } from 'react';
 
-export default function Timer({ duration, onTimeUp }) {
+const Timer = ({ duration, onTimeUp }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
 
   useEffect(() => {
@@ -9,24 +10,14 @@ export default function Timer({ duration, onTimeUp }) {
       return;
     }
 
-    const timer = setTimeout(() => {
+    const timerId = setTimeout(() => {
       setTimeLeft(timeLeft - 1);
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timerId);
   }, [timeLeft, onTimeUp]);
 
-  return (
-    <div className="timer">
-      <div className="timer-text">
-        Tiempo restante: {timeLeft}s
-      </div>
-      <div className="timer-bar">
-        <div 
-          className="timer-progress" 
-          style={{ width: `${(timeLeft / duration) * 100}%` }}
-        />
-      </div>
-    </div>
-  );
-}
+  return <div className="timer">Tiempo: {timeLeft}s</div>;
+};
+
+export default React.memo(Timer);

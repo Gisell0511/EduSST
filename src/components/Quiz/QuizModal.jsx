@@ -1,6 +1,19 @@
 import React from "react";
 
-export default function QuizModal({ type, title, message, score, total, showClose, onClose, onContinue }) {
+export default function QuizModal({ 
+  type, 
+  title, 
+  message, 
+  score, 
+  total, 
+  percentage,
+  showClose, 
+  onClose, 
+  onContinue,
+  onRetry,
+  onAdvance,
+  canAdvance 
+}) {
   const getIcon = () => {
     switch(type) {
       case 'correct': return '✅';
@@ -11,14 +24,19 @@ export default function QuizModal({ type, title, message, score, total, showClos
     }
   };
 
-  const getButtonText = () => {
-    if (onContinue) return 'Continuar';
-    return 'Cerrar';
+  const getModalClass = () => {
+    switch(type) {
+      case 'correct': return 'modal-correct';
+      case 'incorrect': return 'modal-incorrect';
+      case 'timeup': return 'modal-timeup';
+      case 'results': return 'modal-results';
+      default: return '';
+    }
   };
 
   return (
     <div className="modal-overlay">
-      <div className="quiz-modal">
+      <div className={`quiz-modal ${getModalClass()}`}>
         <div className={`modal-icon ${type}`}>
           {getIcon()}
         </div>
@@ -34,21 +52,49 @@ export default function QuizModal({ type, title, message, score, total, showClos
                 <span className="score-total">/{total}</span>
               </div>
               <div className="score-percentage">
-                {Math.round((score / total) * 100)}% de aciertos
+                {percentage !== undefined ? percentage : Math.round((score / total) * 100)}% de aciertos
+              </div>
+              <div className="score-status">
+                {percentage >= 70 ? (
+                  <span className="status-pass">✅ Aprobado</span>
+                ) : (
+                  <span className="status-fail">❌ No aprobado</span>
+                )}
               </div>
             </div>
           )}
         </div>
 
         <div className="modal-actions">
-          {onContinue && (
-            <button className="btn btn-primary" onClick={onContinue}>
-              {getButtonText()}
+          {/* Botón de Avanzar (solo en resultados cuando se puede avanzar) */}
+          {type === 'results' && canAdvance && onAdvance && (
+            <button className="btn btn-success" onClick={onAdvance}>
+              <i className="fas fa-arrow-right"></i>
+              Avanzar al Siguiente Nivel
             </button>
           )}
-          {showClose && (
-            <button className="btn btn-primary" onClick={onClose}>
-              {getButtonText()}
+          
+          {/* Botón de Reintentar (solo en resultados cuando no se aprueba) */}
+          {type === 'results' && onRetry && (
+            <button className="btn btn-warning" onClick={onRetry}>
+              <i className="fas fa-redo"></i>
+              Reintentar Quiz
+            </button>
+          )}
+          
+          {/* Botón de Continuar (para preguntas individuales) */}
+          {onContinue && (
+            <button className="btn btn-primary" onClick={onContinue}>
+              <i className="fas fa-forward"></i>
+              Continuar
+            </button>
+          )}
+          
+          {/* Botón de Cerrar (para modal de resultados) */}
+          {showClose && onClose && (
+            <button className="btn btn-outline" onClick={onClose}>
+              <i className="fas fa-home"></i>
+              Volver al Inicio
             </button>
           )}
         </div>

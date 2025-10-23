@@ -19,6 +19,7 @@ export default function App() {
         <Route index element={<SupportMaterials />} />
         <Route path="materials" element={<SupportMaterials />} />
         <Route path="quiz" element={<QuizPage />} />
+        <Route path="quiz/:level" element={<QuizPage />} /> {/* 👈 Agregar esta línea */}
         <Route path="progress" element={<ProgressPage />} />
       </Route>
       

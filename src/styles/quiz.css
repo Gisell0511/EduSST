@@ -543,3 +543,83 @@
   color: var(--text-muted);
   line-height: 1.4;
 }
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.debug-info {
+  margin-top: 20px;
+  padding: 12px;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.debug-info p {
+  margin: 0;
+}
+
+/* Agregar en quiz.css */
+.debug-info {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.debug-info ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.debug-info li {
+  margin: 4px 0;
+}
+
+/* Agregar a tu CSS */
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.quiz-header-top {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.points-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.points-display i {
+  color: #ffd700;
+}
+
+.quiz-level-badge {
+  padding: 4px 12px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #bbdefb;
+}
