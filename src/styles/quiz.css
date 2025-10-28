@@ -807,6 +807,24 @@
   margin: 16px 0;
 }
 
+/* Agregar al quiz.css */
+.btn:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.quiz-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .option-btn {
@@ -832,4 +850,43 @@
 /* Animación suave para transiciones de pregunta */
 .quiz-content {
   transition: opacity 0.3s ease;
+}
+
+/* Agregar al quiz.css */
+.quiz-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.btn:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Estilos específicos para el botón de terminar */
+.quiz-actions .btn {
+  background: linear-gradient(135deg, var(--primary), #a00815);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.quiz-actions .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(195, 10, 25, 0.4);
+}
+
+.quiz-actions .btn small {
+  display: block;
+  margin-top: 4px;
+  font-weight: normal;
 }
