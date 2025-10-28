@@ -3,12 +3,14 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import Sidebar from "../components/SideBar";
 import { useProgress } from "../contexts/ProgressContext";
 import { api } from "../config/api";
+import TestConnection from "../components/TestConnection";
 
 export default function Dashboard() {
   const location = useLocation();
   const { progress } = useProgress();
   const [levels, setLevels] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [showTest, setShowTest] = useState(true);
   const isNestedRoute = location.pathname !== "/";
 
   useEffect(() => {
@@ -17,25 +19,35 @@ export default function Dashboard() {
 
   const loadCategories = async () => {
     try {
-      const response = await api.getQuizCategories();
-      if (response.success && response.data) {
-        // Mapear categorías del backend a niveles
+      console.log('🔄 Cargando categorías desde backend...');
+      
+      const response = await api.getCategories();
+      
+      console.log('📦 Respuesta del backend:', response);
+      
+      if (response.success && Array.isArray(response.data)) {
+        console.log('✅ Categorías obtenidas correctamente:', response.data.length);
+        
         const categoryLevels = response.data.map((category, index) => ({
           id: category.id || String(index + 1),
           name: category.name || `Nivel ${index + 1}`,
           description: category.description || `Quizzes de ${category.name}`,
-          unlocked: index === 0, // Solo el primer nivel desbloqueado inicialmente
+          unlocked: index === 0,
           completed: false,
-          score: 0
+          score: 0,
+          totalQuestions: category.total_questions || 0,
+          level: category.level
         }));
-        
+          
         setCategories(response.data);
         setLevels(categoryLevels);
+        
       } else {
+        console.log('⚠️ Formato inesperado, usando niveles por defecto');
         setDefaultLevels();
       }
     } catch (error) {
-      console.log('Error cargando categorías, usando niveles por defecto');
+      console.log('❌ Error cargando categorías:', error);
       setDefaultLevels();
     }
   };
@@ -55,6 +67,33 @@ export default function Dashboard() {
       <main className="content-area">
         {!isNestedRoute && (
           <>
+            {/* PRUEBA DE CONEXIÓN */}
+            {showTest && <TestConnection />}
+            
+            {/* Botón para mostrar/ocultar prueba */}
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '20px',
+              padding: '10px',
+              background: '#f8f9fa',
+              borderRadius: '8px'
+            }}>
+              <button 
+                onClick={() => setShowTest(!showTest)}
+                style={{
+                  background: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {showTest ? '❌ Ocultar Prueba de Conexión' : '🔌 Mostrar Prueba de Conexión'}
+              </button>
+            </div>
+
             <div className="header-row">
               <div className="section-title">
                 <i className="fas fa-chart-line"></i>
@@ -93,8 +132,8 @@ export default function Dashboard() {
                       <div className="level-quick-info">
                         <div className="level-quick-name">{level.name}</div>
                         <div className="level-quick-description">{level.description}</div>
-                        {level.score > 0 && (
-                          <div className="level-quick-score">{level.score}% completado</div>
+                        {level.totalQuestions > 0 && (
+                          <div className="level-quick-score">{level.totalQuestions} preguntas</div>
                         )}
                       </div>
                     </Link>

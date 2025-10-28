@@ -623,3 +623,213 @@
   font-weight: 600;
   border: 1px solid #bbdefb;
 }
+
+/* === ESTILOS PARA QUIZ QUESTION - AGREGAR AL FINAL === */
+
+/* Opciones como botones */
+.option-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  margin: 10px 0;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.option-btn:hover {
+  background: rgba(195, 10, 25, 0.05);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.option-btn.selected {
+  background: linear-gradient(135deg, var(--primary), #a00815);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(195, 10, 25, 0.3);
+}
+
+.option-btn.answered {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.option-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.option-btn.answered:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border);
+}
+
+/* Letra de la opción */
+.option-letter {
+  font-weight: 700;
+  margin-right: 16px;
+  min-width: 24px;
+  font-size: 1.1rem;
+}
+
+.option-btn.selected .option-letter {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Texto de la opción */
+.option-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Estados de corrección (para debug o futuro uso) */
+.option-btn.correct {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08));
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #065f46;
+}
+
+.option-btn.incorrect {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.06));
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #7f1d1d;
+}
+
+/* Contenedor de opciones */
+.options-container {
+  margin: 24px 0;
+}
+
+/* Pregunta */
+.question-text {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Feedback visual (mantenido por si lo necesitas después) */
+.answer-feedback {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.feedback.correct {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.06));
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #065f46;
+}
+
+.feedback.incorrect {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.06));
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #7f1d1d;
+}
+
+/* Debug info */
+.debug-info {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(107, 114, 128, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.debug-info details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.debug-info details[open] summary {
+  margin-bottom: 12px;
+}
+
+.debug-info div {
+  margin: 6px 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--primary);
+}
+
+.debug-info ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.debug-info li {
+  margin: 4px 0;
+  color: var(--text-muted);
+}
+
+/* Estados de error y carga */
+.error-state, .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.error-state i, .empty-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.error-state h3, .empty-state h3 {
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+
+.error-message {
+  text-align: center;
+  padding: 20px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #7f1d1d;
+  margin: 16px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .option-btn {
+    padding: 14px 16px;
+    margin: 8px 0;
+  }
+  
+  .question-text {
+    font-size: 1.1rem;
+  }
+  
+  .option-letter {
+    min-width: 20px;
+    margin-right: 12px;
+  }
+  
+  .debug-info {
+    font-size: 0.8rem;
+    padding: 12px;
+  }
+}
+
+/* Animación suave para transiciones de pregunta */
+.quiz-content {
+  transition: opacity 0.3s ease;
+}

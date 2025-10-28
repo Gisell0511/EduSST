@@ -1,80 +1,90 @@
-export const adaptBackendQuiz = (backendData, categoryId) => {
-  console.log('🛠️ Adaptando datos del backend:', backendData);
-  
-  // Si ya es un array de preguntas (como en /quizzes/category/1/quizzes)
-  if (Array.isArray(backendData) && backendData.length > 0 && backendData[0].question) {
-    return {
-      id: `category-${categoryId}-quiz`,
-      title: `Quiz SST - Categoría ${categoryId}`,
-      level: categoryId,
-      questions: backendData.map((question, index) => ({
-        id: question.id || index + 1,
-        type: "multiplechoice",
-        question: question.question,
-        // ✅ Mantener el formato que QuizQuestion espera
-        option_a: question.option_a,
-        option_b: question.option_b, 
-        option_c: question.option_c,
-        option_d: question.option_d,
-        // ✅ Determinar correctamente la respuesta correcta
-        correct_answer: getCorrectAnswer(question),
-        explanation: question.explanation || '',
-        difficulty: question.difficulty || 'medium'
-      }))
-    };
-  }
-  
-  // Si es información de categoría (como en /quizzes/categories)
-  if (backendData.name) {
-    return {
-      id: backendData.id,
-      title: backendData.name,
-      level: backendData.level,
-      description: backendData.description,
-      totalQuestions: backendData.total_questions
-    };
-  }
-  
-  return null;
-};
-
-// ✅ Función corregida para determinar la respuesta correcta
-const getCorrectAnswer = (question) => {
-  // Verificar diferentes formas en que el backend puede indicar la respuesta correcta
-  if (question.correct_answer) {
-    // Si ya viene la letra de la respuesta correcta (a, b, c, d)
-    return question.correct_answer.toLowerCase();
-  }
-  
-  if (question.correct_option) {
-    // Si viene como "correct_option": "a"
-    return question.correct_option.toLowerCase();
-  }
-  
-  if (question.answer) {
-    // Si viene como "answer": 0 (índice) o "a" (letra)
-    if (typeof question.answer === 'number') {
-      // Convertir índice a letra: 0 -> 'a', 1 -> 'b', etc.
-      return String.fromCharCode(97 + question.answer);
+// utils/quizAdapter.js
+export const quizAdapter = {
+  adaptQuizzes: (quizzesData) => {
+    console.log('🔄 ADAPTADOR - Iniciando adaptación de quizzes');
+    console.log('📦 ADAPTADOR - Datos recibidos:', quizzesData);
+    
+    if (!Array.isArray(quizzesData)) {
+      console.error('❌ ADAPTADOR - Error: quizzesData no es un array');
+      return [];
     }
-    return question.answer.toLowerCase();
+    
+    const adaptedQuizzes = quizzesData.map((quiz, index) => {
+      console.log(`🔍 ADAPTADOR - Procesando pregunta ${index + 1} (ID: ${quiz.id})`);
+      
+      let finalOptions = [];
+      
+      // CASO 1: Ya tiene options como array de objetos {letter, text}
+      if (quiz.options && Array.isArray(quiz.options)) {
+        console.log(`✅ ADAPTADOR - Pregunta ${index + 1} ya tiene array de options`);
+        
+        // Verificar que cada opción tenga el formato correcto
+        finalOptions = quiz.options.map((option, optIndex) => {
+          if (typeof option === 'object' && option.letter && option.text) {
+            // Formato correcto: {letter: 'a', text: '...'}
+            return option;
+          } else if (typeof option === 'string') {
+            // Formato string simple - convertir a objeto
+            const letter = String.fromCharCode(97 + optIndex); // a, b, c, d
+            return { letter: letter, text: option };
+          } else {
+            // Opción inválida - crear una por defecto
+            const letter = String.fromCharCode(97 + optIndex);
+            return { letter: letter, text: `Opción ${letter.toUpperCase()}` };
+          }
+        });
+        
+        console.log(`✅ ADAPTADOR - Options procesadas:`, finalOptions);
+      }
+      // CASO 2: Tiene option_a, option_b, etc. (formato individual)
+      else if (quiz.option_a || quiz.option_b || quiz.option_c || quiz.option_d) {
+        console.log(`🔄 ADAPTADOR - Pregunta ${index + 1} tiene opciones individuales`);
+        
+        if (quiz.option_a) finalOptions.push({ letter: 'a', text: quiz.option_a });
+        if (quiz.option_b) finalOptions.push({ letter: 'b', text: quiz.option_b });
+        if (quiz.option_c) finalOptions.push({ letter: 'c', text: quiz.option_c });
+        if (quiz.option_d) finalOptions.push({ letter: 'd', text: quiz.option_d });
+        
+        console.log(`✅ ADAPTADOR - Options creadas desde individuales:`, finalOptions);
+      }
+      // CASO 3: No tiene opciones - CREAR DE EMERGENCIA
+      else {
+        console.warn(`⚠️ ADAPTADOR - Pregunta ${index + 1} sin opciones, creando de emergencia`);
+        
+        finalOptions = [
+          { letter: 'a', text: 'Opción A' },
+          { letter: 'b', text: 'Opción B' },
+          { letter: 'c', text: 'Opción C' },
+          { letter: 'd', text: 'Opción D' }
+        ];
+        
+        console.log(`✅ ADAPTADOR - Options de emergencia creadas:`, finalOptions);
+      }
+      
+      // Crear el objeto de pregunta adaptado
+      const adaptedQuestion = {
+        id: quiz.id || `q-${index + 1}`,
+        question: quiz.question || 'Pregunta no disponible',
+        options: finalOptions,
+        difficulty: quiz.difficulty || 'medium',
+        correct_answer: quiz.correct_answer || 'a'
+      };
+      
+      console.log(`✅ ADAPTADOR - Pregunta ${index + 1} adaptada:`, {
+        id: adaptedQuestion.id,
+        question: adaptedQuestion.question.substring(0, 50) + '...',
+        optionsCount: adaptedQuestion.options.length,
+        hasCorrectAnswer: !!adaptedQuestion.correct_answer
+      });
+      
+      return adaptedQuestion;
+    });
+    
+    console.log('🎉 ADAPTADOR - Adaptación completada');
+    console.log(`📊 ADAPTADOR - Total preguntas procesadas: ${adaptedQuizzes.length}`);
+    
+    return adaptedQuizzes;
   }
-  
-  // ⚠️ Si no hay forma de determinar, usar la primera opción como fallback
-  console.warn('⚠️ No se pudo determinar respuesta correcta para pregunta:', question.id);
-  return 'a';
 };
 
-// Adaptador para categorías
-export const adaptCategoriesToLevels = (categories) => {
-  return categories.map(category => ({
-    id: category.id.toString(),
-    name: category.name,
-    description: category.description,
-    level: category.level,
-    totalQuestions: category.total_questions,
-    unlocked: category.level === 'BÁSICO',
-    completed: false,
-    score: 0
-  }));
-};
+export default quizAdapter;

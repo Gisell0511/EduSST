@@ -31,7 +31,7 @@ export default function LoginPage(){
         loginSimple(user.trim());
         nav("/");
       } else {
-        setErr("Credenciales incorrectas (usa password demo123).");
+        setErr("Credenciales incorrectas. Intenta con el backend o usa password demo123.");
       }
     } catch (error) {
       // Si hay error de conexión, usar método original
@@ -51,21 +51,25 @@ export default function LoginPage(){
   const tryBackendLogin = async (username, password) => {
     try {
       const response = await api.login({ 
-        username: username.trim(), 
+        email: username.trim(),  // ✅ Cambiar "username" por "email"
         password 
       });
       
-      if (response.success) {
-        // Usar el login del backend que maneja tokens
-        await login({ username: username.trim(), password });
+      if (response.success && response.token) {
+        // Guardar token y usuario
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+        
+        // Usar el login del contexto si es necesario
+        if (login) {
+          login(response.user);
+        }
+        
         return { success: true };
       } else {
-        // Si el backend rechaza las credenciales, no mostramos error
-        // para permitir el fallback al método demo
         return { success: false };
       }
     } catch (error) {
-      // Error de conexión, permitir fallback
       console.log("Error de conexión con backend:", error);
       return { success: false };
     }
@@ -91,12 +95,13 @@ export default function LoginPage(){
           <h3 style={{color:"var(--pca-blue)"}}>Iniciar sesión</h3>
           <form onSubmit={submit}>
             <div className="form-group">
-              <label className="small muted">Usuario</label>
+              <label className="small muted">Usuario / Email</label>
               <input 
                 className="input" 
                 value={user} 
                 onChange={(e)=>setUser(e.target.value)}
                 disabled={loading}
+                placeholder="tu@email.com"
               />
             </div>
             <div className="form-group">
@@ -109,7 +114,7 @@ export default function LoginPage(){
                 disabled={loading}
               />
             </div>
-            {err && <div style={{color:"#ff6b6b"}}>{err}</div>}
+            {err && <div style={{color:"#ff6b6b", marginBottom: 10}}>{err}</div>}
             <div className="login-actions">
               <div className="link-small muted">¿Olvidaste tu contraseña?</div>
               <button 
@@ -121,8 +126,9 @@ export default function LoginPage(){
               </button>
             </div>
             <div className="muted small" style={{marginTop:10}}>
-              Usuario libre: cualquier texto | Contraseña: <code>demo123</code>
-              {loading && <div>Intentando conectar con servidor...</div>}
+              <strong>Modo demo:</strong> cualquier texto | Contraseña: <code>demo123</code>
+              <br />
+              <strong>Con backend:</strong> registra un usuario primero
             </div>
           </form>
         </div>

@@ -6,6 +6,7 @@ import SupportMaterials from "./pages/SupportMaterials";
 import QuizPage from "./pages/QuizPage";
 import ProgressPage from "./pages/ProgressPage";
 import { AuthContext } from "./contexts/AuthContext";
+import TestConnection from "./components/TestConnection.jsx";
 
 export default function App() {
   const { user } = useContext(AuthContext);
