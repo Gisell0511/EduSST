@@ -84,216 +84,204 @@ export default function QuizPage() {
   }, [level, navigate, unlockedLevels, unlockLevel, addPoints]);
 
   // completeQuizAttempt SIN dependencia de showResultsModal
-  const completeQuizAttempt = useCallback(async () => {
-    if (!currentQuiz) {
-      console.error('❌ No hay currentQuiz');
+  // Versión segura que no depende de unlockedLevels
+const completeQuizAttempt = useCallback(async () => {
+  if (!currentQuiz) {
+    console.error('❌ No hay currentQuiz');
+    return;
+  }
+  
+  try {
+    console.log('🎯 Iniciando completeQuizAttempt...');
+    
+    const answeredCount = userAnswers.filter(answer => answer !== null).length;
+    console.log(`📊 Respuestas válidas encontradas: ${answeredCount}`);
+    
+    if (answeredCount === 0) {
+      console.log('❌ No hay respuestas, cancelando envío');
+      setError('Por favor responde al menos una pregunta antes de terminar el quiz.');
       return;
     }
+
+    const answers = currentQuiz.questions.map((question, index) => ({
+      questionId: question.id,
+      userAnswer: userAnswers[index]
+    })).filter(answer => answer.userAnswer !== null);
+
+    console.log('📤 Respuestas a enviar:', answers);
+
+    const quizId = currentQuiz.id;
     
-    try {
-      console.log('🎯 Iniciando completeQuizAttempt...');
+    console.log('🚀 Enviando al backend...');
+    const result = await api.submitQuiz(quizId, answers);
+    
+    console.log('✅ Resultado recibido:', result);
+    setQuizResult(result);
+    setIsQuizCompleted(true);
+    
+    // Lógica SIMPLIFICADA del modal - sin dependencias problemáticas
+    const percentage = Math.round((result.correctAnswers / result.totalQuestions) * 100);
+    const levelNames = {
+      '1': 'Básico',
+      '2': 'Intermedio', 
+      '3': 'Avanzado'
+    };
+
+    let title, message, canAdvance;
+    
+    if (percentage >= 70) {
+      title = '🎉 ¡Nivel Completado!';
+      message = `Has aprobado el nivel ${levelNames[level]} con ${percentage}% (${result.correctAnswers}/${result.totalQuestions} correctas)`;
+      canAdvance = level !== '3';
       
-      const answeredCount = userAnswers.filter(answer => answer !== null).length;
-      console.log(`📊 Respuestas válidas encontradas: ${answeredCount}`);
-      
-      if (answeredCount === 0) {
-        console.log('❌ No hay respuestas, cancelando envío');
-        setError('Por favor responde al menos una pregunta antes de terminar el quiz.');
-        return;
+      // Siempre desbloquear el siguiente nivel si se aprueba
+      if (level !== '3') {
+        const nextLevel = parseInt(level) + 1;
+        unlockLevel(nextLevel); // ← Simplemente desbloquear sin verificar
+        console.log(`🔓 Nivel ${nextLevel} desbloqueado!`);
       }
-
-      const answers = currentQuiz.questions.map((question, index) => ({
-        questionId: question.id,
-        userAnswer: userAnswers[index]
-      })).filter(answer => answer.userAnswer !== null);
-
-      console.log('📤 Respuestas a enviar:', answers);
-
-      const quizId = currentQuiz.id;
       
-      console.log('🚀 Enviando al backend...');
-      const result = await api.submitQuiz(quizId, answers);
-      
-      console.log('✅ Resultado recibido:', result);
-      setQuizResult(result);
-      setIsQuizCompleted(true);
-      
-      // Llamar a showResultsModal directamente (sin dependencia)
-      const percentage = Math.round((result.correctAnswers / result.totalQuestions) * 100);
-      const levelNames = {
-        '1': 'Básico',
-        '2': 'Intermedio', 
-        '3': 'Avanzado'
-      };
-
-      let title, message, canAdvance;
-      
-      if (percentage >= 70) {
-        title = '🎉 ¡Nivel Completado!';
-        message = `Has aprobado el nivel ${levelNames[level]} con ${percentage}% (${result.correctAnswers}/${result.totalQuestions} correctas)`;
-        canAdvance = level !== '3';
-        
-        if (level !== '3') {
-          const nextLevel = parseInt(level) + 1;
-          if (!unlockedLevels.includes(nextLevel)) {
-            unlockLevel(nextLevel);
-            console.log(`🔓 Nivel ${nextLevel} desbloqueado!`);
-          }
-        }
-        
-        addPoints(50);
-      } else {
-        title = '📚 Sigue Practicando';
-        message = `Obtuviste ${percentage}% (${result.correctAnswers}/${result.totalQuestions} correctas) - Necesitas 70% para aprobar`;
-        canAdvance = false;
-      }
-
-      setModalConfig({
-        type: 'results',
-        title,
-        message,
-        showClose: true,
-        score: result.correctAnswers,
-        total: result.totalQuestions,
-        percentage: percentage,
-        canAdvance: canAdvance,
-        level: level,
-        onClose: () => {
-          setShowModal(false);
-          navigate('/');
-        },
-        onRetry: () => {
-          setShowModal(false);
-          resetQuiz();
-        },
-        onAdvance: canAdvance ? () => {
-          setShowModal(false);
-          const nextLevel = parseInt(level) + 1;
-          navigate(`/quiz/${nextLevel}`);
-        } : undefined
-      });
-      setShowModal(true);
-      
-    } catch (error) {
-      console.error('❌ Error en completeQuizAttempt:', error);
-      setError('Error al enviar el quiz: ' + error.message);
-      
-      // Manejo de error - mostrar resultados locales
-      const answeredCount = userAnswers.filter(answer => answer !== null).length;
-      const correctCount = userAnswers.filter((answer, index) => 
-        answer === currentQuiz.questions[index]?.correct_answer
-      ).length;
-      
-      const percentage = Math.round((correctCount / currentQuiz.questions.length) * 100);
-      const levelNames = {
-        '1': 'Básico',
-        '2': 'Intermedio', 
-        '3': 'Avanzado'
-      };
-
-      let title, message, canAdvance;
-      
-      if (percentage >= 70) {
-        title = '🎉 ¡Nivel Completado!';
-        message = `Has aprobado el nivel ${levelNames[level]} con ${percentage}% (${correctCount}/${currentQuiz.questions.length} correctas)`;
-        canAdvance = level !== '3';
-        
-        if (level !== '3') {
-          const nextLevel = parseInt(level) + 1;
-          if (!unlockedLevels.includes(nextLevel)) {
-            unlockLevel(nextLevel);
-          }
-        }
-        
-        addPoints(50);
-      } else {
-        title = '📚 Sigue Practicando';
-        message = `Obtuviste ${percentage}% (${correctCount}/${currentQuiz.questions.length} correctas) - Necesitas 70% para aprobar`;
-        canAdvance = false;
-      }
-
-      setModalConfig({
-        type: 'results',
-        title,
-        message,
-        showClose: true,
-        score: correctCount,
-        total: currentQuiz.questions.length,
-        percentage: percentage,
-        canAdvance: canAdvance,
-        level: level,
-        onClose: () => {
-          setShowModal(false);
-          navigate('/');
-        },
-        onRetry: () => {
-          setShowModal(false);
-          resetQuiz();
-        },
-        onAdvance: canAdvance ? () => {
-          setShowModal(false);
-          const nextLevel = parseInt(level) + 1;
-          navigate(`/quiz/${nextLevel}`);
-        } : undefined
-      });
-      setShowModal(true);
+      addPoints(50);
+    } else {
+      title = '📚 Sigue Practicando';
+      message = `Obtuviste ${percentage}% (${result.correctAnswers}/${result.totalQuestions} correctas) - Necesitas 70% para aprobar`;
+      canAdvance = false;
     }
-  }, [currentQuiz, userAnswers, level, navigate, unlockedLevels, unlockLevel, addPoints]);
+
+    setModalConfig({
+      type: 'results',
+      title,
+      message,
+      showClose: true,
+      score: result.correctAnswers,
+      total: result.totalQuestions,
+      percentage: percentage,
+      canAdvance: canAdvance,
+      level: level,
+      onClose: () => {
+        setShowModal(false);
+        navigate('/');
+      },
+      onRetry: () => {
+        setShowModal(false);
+        resetQuiz();
+      },
+      onAdvance: canAdvance ? () => {
+        setShowModal(false);
+        const nextLevel = parseInt(level) + 1;
+        navigate(`/quiz/${nextLevel}`);
+      } : undefined
+    });
+    setShowModal(true);
+    
+  } catch (error) {
+    console.error('❌ Error en completeQuizAttempt:', error);
+    // Manejo de error simplificado
+    const correctCount = userAnswers.filter((answer, index) => 
+      answer === currentQuiz.questions[index]?.correct_answer
+    ).length;
+    
+    const percentage = Math.round((correctCount / currentQuiz.questions.length) * 100);
+    
+    setModalConfig({
+      type: 'results',
+      title: percentage >= 70 ? '🎉 ¡Nivel Completado!' : '📚 Sigue Practicando',
+      message: `Resultado local: ${correctCount}/${currentQuiz.questions.length} correctas (${percentage}%)`,
+      showClose: true,
+      score: correctCount,
+      total: currentQuiz.questions.length,
+      percentage: percentage,
+      canAdvance: percentage >= 70 && level !== '3',
+      level: level,
+      onClose: () => {
+        setShowModal(false);
+        navigate('/');
+      },
+      onRetry: () => {
+        setShowModal(false);
+        resetQuiz();
+      },
+      onAdvance: percentage >= 70 && level !== '3' ? () => {
+        setShowModal(false);
+        const nextLevel = parseInt(level) + 1;
+        navigate(`/quiz/${nextLevel}`);
+      } : undefined
+    });
+    setShowModal(true);
+  }
+}, [currentQuiz, userAnswers, level, navigate, unlockLevel, addPoints]); // ← Quitar unlockedLevels de dependencias
 
   // Resto de funciones...
   const handleAnswer = useCallback((selectedLetter) => {
-    if (!currentQuiz) return;
-    
-    const newAnswers = [...userAnswers];
-    newAnswers[currentQuestion] = selectedLetter;
-    setUserAnswers(newAnswers);
+  if (!currentQuiz) return;
+  
+  const newAnswers = [...userAnswers];
+  newAnswers[currentQuestion] = selectedLetter;
+  setUserAnswers(newAnswers);
+  
+  // Limpiar cualquier error anterior
+  setError(null);
 
-    console.log(`✅ Respuesta guardada: Pregunta ${currentQuestion + 1} = ${selectedLetter}`);
+  console.log(`✅ Respuesta guardada: Pregunta ${currentQuestion + 1} = ${selectedLetter}`);
 
-    if (currentQuestion + 1 < currentQuiz.questions.length) {
-      setTimeout(() => {
-        setCurrentQuestion(prev => prev + 1);
-        if ((currentQuestion + 1) % 3 === 0) {
-          setStage(prev => prev + 1);
-        }
-      }, 500);
-    } else {
-      const answeredCount = newAnswers.filter(answer => answer !== null).length;
-      console.log(`📊 Total de respuestas: ${answeredCount}/${newAnswers.length}`);
-      
-      if (answeredCount === 0) {
-        console.log('⚠️ No hay respuestas, mostrando alerta...');
-        alert('Por favor responde al menos una pregunta');
-        return;
+  if (currentQuestion + 1 < currentQuiz.questions.length) {
+    setTimeout(() => {
+      setCurrentQuestion(prev => prev + 1);
+      if ((currentQuestion + 1) % 3 === 0) {
+        setStage(prev => prev + 1);
       }
-      
-      setTimeout(() => {
-        completeQuizAttempt();
-      }, 500);
+    }, 500);
+  } else {
+    const answeredCount = newAnswers.filter(answer => answer !== null).length;
+    console.log(`📊 Total de respuestas: ${answeredCount}/${newAnswers.length}`);
+    
+    if (answeredCount === 0) {
+      console.log('⚠️ No hay respuestas, mostrando alerta...');
+      setError('Por favor responde al menos una pregunta antes de terminar el quiz.');
+      return;
     }
-  }, [currentQuiz, currentQuestion, userAnswers, completeQuizAttempt]);
+    
+    setTimeout(() => {
+      completeQuizAttempt();
+    }, 500);
+  }
+}, [currentQuiz, currentQuestion, userAnswers, completeQuizAttempt]);
 
   const handleTimeUp = useCallback(() => {
-    console.log('⏰ Tiempo agotado para pregunta', currentQuestion + 1);
+  console.log('⏰ Tiempo agotado para pregunta', currentQuestion + 1);
+  
+  const newAnswers = [...userAnswers];
+  newAnswers[currentQuestion] = null; // Marcar como no respondida
+  setUserAnswers(newAnswers);
+
+  console.log(`📊 Respuestas después de tiempo: ${newAnswers.filter(a => a !== null).length}/${newAnswers.length}`);
+
+  // Verificar si es la ÚLTIMA pregunta
+  const isLastQuestion = currentQuestion === currentQuiz?.questions?.length - 1;
+  
+  if (!isLastQuestion) {
+    // No es la última pregunta - avanzar automáticamente
+    console.log('➡️ Avanzando a siguiente pregunta...');
+    setTimeout(() => {
+      setCurrentQuestion(prev => prev + 1);
+      if ((currentQuestion + 1) % 3 === 0) {
+        setStage(prev => prev + 1);
+      }
+    }, 1000);
+  } else {
+    // ES la última pregunta - mostrar mensaje pero NO avanzar
+    console.log('🏁 Última pregunta - Tiempo agotado, MOSTRANDO BOTÓN MANUAL');
     
-    const newAnswers = [...userAnswers];
-    newAnswers[currentQuestion] = null;
-    setUserAnswers(newAnswers);
-
-    console.log(`📊 Respuestas después de tiempo: ${newAnswers.filter(a => a !== null).length}/${newAnswers.length}`);
-
-    if (currentQuestion + 1 < currentQuiz.questions.length) {
-      console.log('➡️ Avanzando a siguiente pregunta...');
-      setTimeout(() => {
-        setCurrentQuestion(prev => prev + 1);
-        if ((currentQuestion + 1) % 3 === 0) {
-          setStage(prev => prev + 1);
-        }
-      }, 1000);
-    } else {
-      console.log('🏁 Última pregunta - Tiempo agotado, MOSTRANDO BOTÓN MANUAL');
-    }
-  }, [currentQuiz, currentQuestion, userAnswers]);
+    // Opcional: Mostrar un mensaje al usuario
+    setTimeout(() => {
+      if (newAnswers.filter(a => a !== null).length === 0) {
+        setError('⏰ Tiempo agotado. Responde al menos una pregunta y presiona "Terminar Quiz"');
+      } else {
+        setError('⏰ Tiempo agotado en la última pregunta. Presiona "Terminar Quiz" cuando estés listo.');
+      }
+    }, 500);
+  }
+}, [currentQuiz, currentQuestion, userAnswers]);
 
   const resetQuiz = useCallback(() => {
     setCurrentQuestion(0);
@@ -403,9 +391,24 @@ export default function QuizPage() {
           duration={30} 
           onTimeUp={handleTimeUp} 
           currentQuestion={currentQuestion} // ← Prop agregada
+          isLastQuestion={currentQuestion === currentQuiz?.questions?.length - 1}
         />
         <ProgressBar current={currentQuestion + 1} total={currentQuiz?.questions?.length || 1} />
         
+        {error && (
+          <div style={{ 
+            padding: '12px', 
+            background: 'rgba(239, 68, 68, 0.1)', 
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: '#ef4444',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+
         <div className="quiz-content">
           {currentQuiz && currentQuiz.questions && (
             <QuizQuestion 
@@ -414,7 +417,7 @@ export default function QuizPage() {
               selectedAnswer={userAnswers[currentQuestion]}
             />
           )}
-  
+
           {/* Botón para enviar manualmente - MEJORADO */}
           {currentQuestion === currentQuiz?.questions?.length - 1 && (
             <div className="quiz-actions" style={{ marginTop: '20px', textAlign: 'center' }}>

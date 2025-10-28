@@ -1,12 +1,21 @@
-// En components/Quiz/Timer.jsx
+// components/Quiz/Timer.jsx
 import { useState, useEffect } from 'react';
 
-const Timer = ({ duration, onTimeUp, currentQuestion }) => { // ← agregar currentQuestion prop
+const Timer = ({ duration, onTimeUp, currentQuestion, isLastQuestion }) => { // ← agregar isLastQuestion
   const [timeLeft, setTimeLeft] = useState(duration);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    // Si es la última pregunta, pausar el timer
+    if (isLastQuestion) {
+      console.log('⏸️ Última pregunta - Timer pausado');
+      setIsPaused(true);
+      return;
+    }
+
     // Reset timer cuando cambia la pregunta
     setTimeLeft(duration);
+    setIsPaused(false);
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -20,13 +29,16 @@ const Timer = ({ duration, onTimeUp, currentQuestion }) => { // ← agregar curr
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [duration, onTimeUp, currentQuestion]); // ← agregar currentQuestion como dependencia
+  }, [duration, onTimeUp, currentQuestion, isLastQuestion]);
 
   const progress = (timeLeft / duration) * 100;
 
   return (
     <div className="timer">
-      <div className="timer-text">Tiempo: {timeLeft}s</div>
+      <div className="timer-text">
+        Tiempo: {timeLeft}s 
+        {isLastQuestion && " ⏸️ (Pausado)"}
+      </div>
       <div className="timer-bar">
         <div 
           className="timer-progress" 
