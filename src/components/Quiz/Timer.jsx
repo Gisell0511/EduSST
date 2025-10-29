@@ -1,26 +1,42 @@
 // components/Quiz/Timer.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const Timer = ({ duration, onTimeUp, currentQuestion, isLastQuestion }) => { // ← agregar isLastQuestion
+const Timer = ({ duration, onTimeUp, currentQuestion, isLastQuestion }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef(null);
 
   useEffect(() => {
-    // Si es la última pregunta, pausar el timer
+    console.log('⏰ Timer - Iniciando efecto:', { 
+      currentQuestion, 
+      isLastQuestion,
+      duration 
+    });
+    
+    // LIMPIAR TIMER ANTERIOR
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // RESETEAR ESTADO DE PAUSA - IMPORTANTE
+    setIsPaused(false);
+    setTimeLeft(duration);
+
+    // Si es la última pregunta, pausar
     if (isLastQuestion) {
-      console.log('⏸️ Última pregunta - Timer pausado');
+      console.log('⏸️ Timer - Última pregunta, pausando');
       setIsPaused(true);
       return;
     }
 
-    // Reset timer cuando cambia la pregunta
-    setTimeLeft(duration);
-    setIsPaused(false);
-    
-    const timer = setInterval(() => {
+    // INICIAR NUEVO TIMER
+    console.log('▶️ Timer - Iniciando nuevo timer');
+    timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timer);
+          console.log('⏰ Timer - Tiempo agotado');
+          clearInterval(timerRef.current);
           onTimeUp();
           return 0;
         }
@@ -28,7 +44,12 @@ const Timer = ({ duration, onTimeUp, currentQuestion, isLastQuestion }) => { // 
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      console.log('🧹 Timer - Cleanup');
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [duration, onTimeUp, currentQuestion, isLastQuestion]);
 
   const progress = (timeLeft / duration) * 100;
@@ -37,7 +58,7 @@ const Timer = ({ duration, onTimeUp, currentQuestion, isLastQuestion }) => { // 
     <div className="timer">
       <div className="timer-text">
         Tiempo: {timeLeft}s 
-        {isLastQuestion && " ⏸️ (Pausado)"}
+        {isPaused && " ⏸️ (Pausado)"}
       </div>
       <div className="timer-bar">
         <div 

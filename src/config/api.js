@@ -81,17 +81,26 @@ export const api = {
   },
 
   getQuizzesByCategory: async (categoryId) => {
-    console.log(`📡 Obteniendo quizzes para categoría ${categoryId}...`);
+  try {
+    console.log(`📡 [API] Obteniendo quizzes para categoría ${categoryId}...`);
     const response = await fetch(`${API_BASE}/quizzes/category/${categoryId}/quizzes`);
+    
+    console.log(`📡 [API] Response status: ${response.status}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
-    console.log('✅ Quizzes obtenidos:', data.length, 'preguntas');
+    console.log(`✅ [API] Quizzes obtenidos: ${data.length} preguntas`);
+    console.log(`🔍 [API] Tipo de data: ${typeof data}, Es array: ${Array.isArray(data)}`);
+    
     return data;
-  },
+  } catch (error) {
+    console.error('❌ [API] Error en getQuizzesByCategory:', error);
+    throw error;
+  }
+},
 
   // ⚠️ FUNCIÓN QUE FALTABA - DEBE EXISTIR EN BACKEND
   submitQuiz: async (quizId, answers) => {

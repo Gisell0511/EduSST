@@ -6,12 +6,58 @@ import ProgressBar from "../components/Quiz/ProgressBar";
 import QuizQuestion from "../components/Quiz/QuizQuestion";
 import QuizModal from "../components/Quiz/QuizModal";
 import { api } from "../config/api";
-import { useProgress } from "../contexts/ProgressContext";
 import { quizAdapter } from '../utils/quizAdapter';
+
+// === HOOK SIMPLE QUE SIEMPRE FUNCIONA ===
+const useProgressSimple = () => {
+  console.log('🔧 useProgressSimple - INICIANDO');
+  
+  const points = parseInt(localStorage.getItem('sst_points') || '0');
+  const unlockedLevels = JSON.parse(localStorage.getItem('sst_unlockedLevels') || '[1]');
+  
+  const addPoints = (pointsToAdd) => {
+    const newPoints = points + pointsToAdd;
+    localStorage.setItem('sst_points', String(newPoints));
+    console.log(`⭐ [SIMPLE] Agregando ${pointsToAdd} puntos. Total: ${newPoints}`);
+  };
+  
+  const unlockLevel = (levelId) => {
+    const currentLevels = JSON.parse(localStorage.getItem('sst_unlockedLevels') || '[1]');
+    if (!currentLevels.includes(levelId)) {
+      const newLevels = [...currentLevels, levelId];
+      localStorage.setItem('sst_unlockedLevels', JSON.stringify(newLevels));
+      console.log(`🔓 [SIMPLE] Nivel ${levelId} desbloqueado. Niveles: ${newLevels}`);
+    } else {
+      console.log(`ℹ️ [SIMPLE] Nivel ${levelId} ya estaba desbloqueado`);
+    }
+  };
+  
+  const resetProgress = () => {
+    localStorage.setItem('sst_points', '0');
+    localStorage.setItem('sst_unlockedLevels', '[1]');
+  };
+
+  return { 
+    points, 
+    addPoints, 
+    unlockedLevels, 
+    unlockLevel, 
+    resetProgress 
+  };
+};
 
 export default function QuizPage() {
   const { level } = useParams();
   const navigate = useNavigate();
+  
+  // USA EL HOOK SIMPLE - ESTO SIEMPRE FUNCIONA
+  const { points, addPoints, unlockedLevels, unlockLevel } = useProgressSimple();
+  
+  console.log('✅ useProgressSimple - Points:', points);
+  console.log('✅ useProgressSimple - UnlockedLevels:', unlockedLevels);
+  console.log('✅ useProgressSimple - unlockLevel tipo:', typeof unlockLevel);
+  console.log('✅ useProgressSimple - addPoints tipo:', typeof addPoints);
+
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [stage, setStage] = useState(1);
@@ -22,12 +68,82 @@ export default function QuizPage() {
   const [error, setError] = useState(null);
   const [isQuizCompleted, setIsQuizCompleted] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
-  
-  const { points, addPoints, unlockedLevels, unlockLevel } = useProgress();
 
-  // Función para mostrar resultados SIN dependencias circulares
-  const showResultsModal = useCallback((finalScore, totalQuestions, correctAnswers) => {
+  const completeQuizAttempt = useCallback(async () => {
+  // VERIFICACIONES DE SEGURIDAD MEJORADAS
+  if (!currentQuiz) {
+    console.error('❌ No hay currentQuiz - el quiz no se cargó correctamente');
+    setError('Error: El quiz no se cargó correctamente. Por favor recarga la página.');
+    return;
+  }
+  
+  // Verificar que el quiz tenga preguntas
+  if (!currentQuiz.questions || currentQuiz.questions.length === 0) {
+    console.error('❌ El quiz no tiene preguntas');
+    setError('Error: El quiz no tiene preguntas disponibles.');
+    return;
+  }
+  
+  // Verificar que userAnswers tenga la longitud correcta
+  if (userAnswers.length !== currentQuiz.questions.length) {
+    console.error('❌ userAnswers no coincide con las preguntas del quiz');
+    setError('Error: Hay un problema con las respuestas. Por favor recarga la página.');
+    return;
+  }
+  
+  try {
+    console.log('🎯 Iniciando completeQuizAttempt...');
+    console.log(`📊 Preguntas en quiz: ${currentQuiz.questions.length}`);
+    console.log(`📊 Respuestas en array: ${userAnswers.length}`);
+    
+    const answeredCount = userAnswers.filter(answer => answer !== null).length;
+    console.log(`📊 Respuestas válidas encontradas: ${answeredCount}`);
+    
+    if (answeredCount === 0) {
+      console.log('❌ No hay respuestas, cancelando envío');
+      setError('Por favor responde al menos una pregunta antes de terminar el quiz.');
+      return;
+    }
+
+    // PREPARAR RESPUESTAS CON VALIDACIÓN
+    const answers = currentQuiz.questions
+      .map((question, index) => {
+        // Verificar que la pregunta existe
+        if (!question || !question.id) {
+          console.warn(`⚠️ Pregunta en índice ${index} no válida`);
+          return null;
+        }
+        
+        return {
+          questionId: question.id,
+          userAnswer: userAnswers[index] // Puede ser null (no respondida)
+        };
+      })
+      .filter(answer => answer !== null && answer.userAnswer !== null); // Solo respuestas válidas
+
+    console.log('📤 Respuestas a enviar:', answers);
+    console.log(`📤 Total respuestas válidas: ${answers.length}`);
+
+    if (answers.length === 0) {
+      console.log('❌ No hay respuestas válidas después del filtrado');
+      setError('No se encontraron respuestas válidas para enviar.');
+      return;
+    }
+
+    const quizId = currentQuiz.id;
+    
+    console.log('🚀 Enviando al backend...');
+    const result = await api.submitQuiz(quizId, answers);
+    
+    console.log('✅ Resultado recibido:', result);
+    setQuizResult(result);
+    setIsQuizCompleted(true);
+    
+    // LÓGICA DEL MODAL MEJORADA
+    const totalQuestions = result.totalQuestions || currentQuiz.questions.length;
+    const correctAnswers = result.correctAnswers || 0;
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+    
     const levelNames = {
       '1': 'Básico',
       '2': 'Intermedio', 
@@ -41,14 +157,14 @@ export default function QuizPage() {
       message = `Has aprobado el nivel ${levelNames[level]} con ${percentage}% (${correctAnswers}/${totalQuestions} correctas)`;
       canAdvance = level !== '3';
       
+      // ESTAS FUNCIONES AHORA SIEMPRE EXISTEN
       if (level !== '3') {
         const nextLevel = parseInt(level) + 1;
-        if (!unlockedLevels.includes(nextLevel)) {
-          unlockLevel(nextLevel);
-          console.log(`🔓 Nivel ${nextLevel} desbloqueado!`);
-        }
+        console.log(`🔓 Desbloqueando nivel ${nextLevel}...`);
+        unlockLevel(nextLevel);
       }
       
+      console.log(`⭐ Agregando 50 puntos...`);
       addPoints(50);
     } else {
       title = '📚 Sigue Practicando';
@@ -81,207 +197,118 @@ export default function QuizPage() {
       } : undefined
     });
     setShowModal(true);
-  }, [level, navigate, unlockedLevels, unlockLevel, addPoints]);
-
-  // completeQuizAttempt SIN dependencia de showResultsModal
-  // Versión segura que no depende de unlockedLevels
-const completeQuizAttempt = useCallback(async () => {
-  if (!currentQuiz) {
-    console.error('❌ No hay currentQuiz');
-    return;
-  }
-  
-  try {
-    console.log('🎯 Iniciando completeQuizAttempt...');
-    
-    const answeredCount = userAnswers.filter(answer => answer !== null).length;
-    console.log(`📊 Respuestas válidas encontradas: ${answeredCount}`);
-    
-    if (answeredCount === 0) {
-      console.log('❌ No hay respuestas, cancelando envío');
-      setError('Por favor responde al menos una pregunta antes de terminar el quiz.');
-      return;
-    }
-
-    const answers = currentQuiz.questions.map((question, index) => ({
-      questionId: question.id,
-      userAnswer: userAnswers[index]
-    })).filter(answer => answer.userAnswer !== null);
-
-    console.log('📤 Respuestas a enviar:', answers);
-
-    const quizId = currentQuiz.id;
-    
-    console.log('🚀 Enviando al backend...');
-    const result = await api.submitQuiz(quizId, answers);
-    
-    console.log('✅ Resultado recibido:', result);
-    setQuizResult(result);
-    setIsQuizCompleted(true);
-    
-    // Lógica SIMPLIFICADA del modal - sin dependencias problemáticas
-    const percentage = Math.round((result.correctAnswers / result.totalQuestions) * 100);
-    const levelNames = {
-      '1': 'Básico',
-      '2': 'Intermedio', 
-      '3': 'Avanzado'
-    };
-
-    let title, message, canAdvance;
-    
-    if (percentage >= 70) {
-      title = '🎉 ¡Nivel Completado!';
-      message = `Has aprobado el nivel ${levelNames[level]} con ${percentage}% (${result.correctAnswers}/${result.totalQuestions} correctas)`;
-      canAdvance = level !== '3';
-      
-      // Siempre desbloquear el siguiente nivel si se aprueba
-      if (level !== '3') {
-        const nextLevel = parseInt(level) + 1;
-        unlockLevel(nextLevel); // ← Simplemente desbloquear sin verificar
-        console.log(`🔓 Nivel ${nextLevel} desbloqueado!`);
-      }
-      
-      addPoints(50);
-    } else {
-      title = '📚 Sigue Practicando';
-      message = `Obtuviste ${percentage}% (${result.correctAnswers}/${result.totalQuestions} correctas) - Necesitas 70% para aprobar`;
-      canAdvance = false;
-    }
-
-    setModalConfig({
-      type: 'results',
-      title,
-      message,
-      showClose: true,
-      score: result.correctAnswers,
-      total: result.totalQuestions,
-      percentage: percentage,
-      canAdvance: canAdvance,
-      level: level,
-      onClose: () => {
-        setShowModal(false);
-        navigate('/');
-      },
-      onRetry: () => {
-        setShowModal(false);
-        resetQuiz();
-      },
-      onAdvance: canAdvance ? () => {
-        setShowModal(false);
-        const nextLevel = parseInt(level) + 1;
-        navigate(`/quiz/${nextLevel}`);
-      } : undefined
-    });
-    setShowModal(true);
     
   } catch (error) {
     console.error('❌ Error en completeQuizAttempt:', error);
-    // Manejo de error simplificado
-    const correctCount = userAnswers.filter((answer, index) => 
-      answer === currentQuiz.questions[index]?.correct_answer
-    ).length;
     
-    const percentage = Math.round((correctCount / currentQuiz.questions.length) * 100);
+    // MANEJO DE ERROR MEJORADO
+    let errorMessage = 'Error al enviar el quiz: ' + error.message;
     
-    setModalConfig({
-      type: 'results',
-      title: percentage >= 70 ? '🎉 ¡Nivel Completado!' : '📚 Sigue Practicando',
-      message: `Resultado local: ${correctCount}/${currentQuiz.questions.length} correctas (${percentage}%)`,
-      showClose: true,
-      score: correctCount,
-      total: currentQuiz.questions.length,
-      percentage: percentage,
-      canAdvance: percentage >= 70 && level !== '3',
-      level: level,
-      onClose: () => {
-        setShowModal(false);
-        navigate('/');
-      },
-      onRetry: () => {
-        setShowModal(false);
-        resetQuiz();
-      },
-      onAdvance: percentage >= 70 && level !== '3' ? () => {
-        setShowModal(false);
-        const nextLevel = parseInt(level) + 1;
-        navigate(`/quiz/${nextLevel}`);
-      } : undefined
-    });
-    setShowModal(true);
+    // Calcular resultado local como fallback
+    try {
+      const correctCount = userAnswers.filter((answer, index) => {
+        if (!currentQuiz.questions[index]) return false;
+        return answer === currentQuiz.questions[index]?.correct_answer;
+      }).length;
+      
+      const totalQuestions = currentQuiz.questions.length;
+      const percentage = Math.round((correctCount / totalQuestions) * 100);
+      
+      errorMessage += ` | Resultado local: ${correctCount}/${totalQuestions} correctas (${percentage}%)`;
+      
+      setModalConfig({
+        type: 'results',
+        title: percentage >= 70 ? '🎉 ¡Nivel Completado!' : '📚 Sigue Practicando',
+        message: `Hubo un error pero aquí está tu resultado local: ${correctCount}/${totalQuestions} correctas (${percentage}%)`,
+        showClose: true,
+        score: correctCount,
+        total: totalQuestions,
+        percentage: percentage,
+        canAdvance: percentage >= 70 && level !== '3',
+        level: level,
+        onClose: () => {
+          setShowModal(false);
+          navigate('/');
+        },
+        onRetry: () => {
+          setShowModal(false);
+          resetQuiz();
+        },
+        onAdvance: percentage >= 70 && level !== '3' ? () => {
+          setShowModal(false);
+          const nextLevel = parseInt(level) + 1;
+          navigate(`/quiz/${nextLevel}`);
+        } : undefined
+      });
+      setShowModal(true);
+      
+    } catch (fallbackError) {
+      console.error('❌ Error en el fallback también:', fallbackError);
+      setError(errorMessage);
+    }
   }
-}, [currentQuiz, userAnswers, level, navigate, unlockLevel, addPoints]); // ← Quitar unlockedLevels de dependencias
+}, [currentQuiz, userAnswers, level, navigate, unlockLevel, addPoints]);
 
-  // Resto de funciones...
   const handleAnswer = useCallback((selectedLetter) => {
-  if (!currentQuiz) return;
+  if (!currentQuiz) {
+    console.error('❌ No hay quiz cargado');
+    return;
+  }
   
+  console.log(`✅ Respuesta: Pregunta ${currentQuestion + 1} = ${selectedLetter}`);
+  console.log(`📊 Progreso actual: ${currentQuestion + 1}/${currentQuiz.questions.length}`);
+
+  // ACTUALIZAR RESPUESTAS
   const newAnswers = [...userAnswers];
   newAnswers[currentQuestion] = selectedLetter;
   setUserAnswers(newAnswers);
-  
-  // Limpiar cualquier error anterior
   setError(null);
 
-  console.log(`✅ Respuesta guardada: Pregunta ${currentQuestion + 1} = ${selectedLetter}`);
+  // VERIFICAR SI ES LA ÚLTIMA PREGUNTA
+  const isLastQuestion = currentQuestion + 1 >= currentQuiz.questions.length;
+  console.log(`🔍 ¿Es última pregunta?: ${isLastQuestion}`);
 
-  if (currentQuestion + 1 < currentQuiz.questions.length) {
+  if (!isLastQuestion) {
+    console.log('➡️ Avanzando a siguiente pregunta...');
+    
     setTimeout(() => {
-      setCurrentQuestion(prev => prev + 1);
-      if ((currentQuestion + 1) % 3 === 0) {
-        setStage(prev => prev + 1);
+      const nextQuestion = currentQuestion + 1;
+      const nextStage = Math.floor(nextQuestion / 3) + 1;
+      
+      console.log(`🎯 Nuevos valores: pregunta ${nextQuestion + 1}, etapa ${nextStage}`);
+      
+      // ACTUALIZAR ESTADOS
+      setCurrentQuestion(nextQuestion);
+      if (nextStage !== stage) {
+        setStage(nextStage);
       }
     }, 500);
   } else {
-    const answeredCount = newAnswers.filter(answer => answer !== null).length;
-    console.log(`📊 Total de respuestas: ${answeredCount}/${newAnswers.length}`);
-    
-    if (answeredCount === 0) {
-      console.log('⚠️ No hay respuestas, mostrando alerta...');
-      setError('Por favor responde al menos una pregunta antes de terminar el quiz.');
-      return;
-    }
-    
-    setTimeout(() => {
-      completeQuizAttempt();
-    }, 500);
+    console.log('🏁 ÚLTIMA PREGUNTA - Mostrando botón manual');
   }
-}, [currentQuiz, currentQuestion, userAnswers, completeQuizAttempt]);
+}, [currentQuiz, currentQuestion, userAnswers, stage]);
 
   const handleTimeUp = useCallback(() => {
-  console.log('⏰ Tiempo agotado para pregunta', currentQuestion + 1);
-  
-  const newAnswers = [...userAnswers];
-  newAnswers[currentQuestion] = null; // Marcar como no respondida
-  setUserAnswers(newAnswers);
-
-  console.log(`📊 Respuestas después de tiempo: ${newAnswers.filter(a => a !== null).length}/${newAnswers.length}`);
-
-  // Verificar si es la ÚLTIMA pregunta
-  const isLastQuestion = currentQuestion === currentQuiz?.questions?.length - 1;
-  
-  if (!isLastQuestion) {
-    // No es la última pregunta - avanzar automáticamente
-    console.log('➡️ Avanzando a siguiente pregunta...');
-    setTimeout(() => {
-      setCurrentQuestion(prev => prev + 1);
-      if ((currentQuestion + 1) % 3 === 0) {
-        setStage(prev => prev + 1);
-      }
-    }, 1000);
-  } else {
-    // ES la última pregunta - mostrar mensaje pero NO avanzar
-    console.log('🏁 Última pregunta - Tiempo agotado, MOSTRANDO BOTÓN MANUAL');
+    console.log('⏰ Tiempo agotado para pregunta', currentQuestion + 1);
     
-    // Opcional: Mostrar un mensaje al usuario
-    setTimeout(() => {
-      if (newAnswers.filter(a => a !== null).length === 0) {
-        setError('⏰ Tiempo agotado. Responde al menos una pregunta y presiona "Terminar Quiz"');
-      } else {
-        setError('⏰ Tiempo agotado en la última pregunta. Presiona "Terminar Quiz" cuando estés listo.');
-      }
-    }, 500);
-  }
-}, [currentQuiz, currentQuestion, userAnswers]);
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestion] = null;
+    setUserAnswers(newAnswers);
+
+    console.log(`📊 Respuestas después de tiempo: ${newAnswers.filter(a => a !== null).length}/${newAnswers.length}`);
+
+    if (currentQuestion + 1 < currentQuiz.questions.length) {
+      console.log('➡️ Avanzando a siguiente pregunta...');
+      setTimeout(() => {
+        setCurrentQuestion(prev => prev + 1);
+        if ((currentQuestion + 1) % 3 === 0) {
+          setStage(prev => prev + 1);
+        }
+      }, 1000);
+    } else {
+      console.log('🏁 Última pregunta - Tiempo agotado, MOSTRANDO BOTÓN MANUAL');
+    }
+  }, [currentQuiz, currentQuestion, userAnswers]);
 
   const resetQuiz = useCallback(() => {
     setCurrentQuestion(0);
@@ -290,6 +317,7 @@ const completeQuizAttempt = useCallback(async () => {
     setIsQuizCompleted(false);
     setQuizResult(null);
     setShowModal(false);
+    setError(null);
   }, []);
 
   const handleModalClose = useCallback(() => {
@@ -307,70 +335,142 @@ const completeQuizAttempt = useCallback(async () => {
 
   const loadQuizFromBackend = async (categoryId) => {
   try {
+    console.log('🔄 [NUEVO QUIZ] Cargando nivel:', categoryId);
+    
+    // RESETEAR ESTADOS ANTES DE CARGAR - IMPORTANTE
     setLoading(true);
     setError(null);
-    setUserAnswers([]);
+    setCurrentQuiz(null);           // ← Limpiar quiz anterior
+    setCurrentQuestion(0);          // ← Volver a pregunta 1 (índice 0)
+    setStage(1);                    // ← Volver a etapa 1  
+    setUserAnswers([]);             // ← Limpiar respuestas anteriores
+    setShowModal(false);            // ← Cerrar modales abiertos
+    setIsQuizCompleted(false);      // ← Resetear estado de completado
+    setQuizResult(null);            // ← Limpiar resultados anteriores
+
+    console.log('🎯 [FRONTEND] Estados reseteados - Iniciando carga...');
     
-    console.log('🎯 PASO 1 - Solicitando quizzes para categoría:', categoryId);
-    
+    // PASO 1: Llamar al API
     const quizzesData = await api.getQuizzesByCategory(categoryId);
-    console.log('📦 PASO 1.2 - Respuesta CRUDA del backend:', quizzesData);
-    
-    console.log('🔍 PASO 1.3 - Tipo de datos:', typeof quizzesData);
-    console.log('🔍 PASO 1.3 - Es array?:', Array.isArray(quizzesData));
+    console.log('📦 [FRONTEND] Respuesta CRUDA del backend:', quizzesData);
+    console.log('🔍 [FRONTEND] Tipo de datos:', typeof quizzesData);
+    console.log('🔍 [FRONTEND] Es array?:', Array.isArray(quizzesData));
     
     if (Array.isArray(quizzesData)) {
-      console.log('🔍 PASO 1.4 - Número de preguntas:', quizzesData.length);
+      console.log('🔍 [FRONTEND] Número de preguntas recibidas:', quizzesData.length);
+      
       if (quizzesData.length > 0) {
-        console.log('🔍 PASO 1.5 - Primera pregunta completa:', quizzesData[0]);
-        console.log('🔍 PASO 1.6 - Keys de la primera pregunta:', Object.keys(quizzesData[0]));
-        console.log('🔍 PASO 1.7 - Tiene options?:', 'options' in quizzesData[0]);
-        
-        // 👇 NUEVO: Ver el CONTENIDO de options
-        console.log('🔍 PASO 1.8 - Contenido de options:', quizzesData[0].options);
-        console.log('🔍 PASO 1.9 - Tipo de options:', typeof quizzesData[0].options);
-        console.log('🔍 PASO 1.10 - Es array options?:', Array.isArray(quizzesData[0].options));
-        if (Array.isArray(quizzesData[0].options)) {
-          console.log('🔍 PASO 1.11 - Número de opciones:', quizzesData[0].options.length);
-          console.log('🔍 PASO 1.12 - Primera opción:', quizzesData[0].options[0]);
-        }
+        console.log('🔍 [FRONTEND] Primera pregunta:', quizzesData[0]);
+        console.log('🔍 [FRONTEND] Tiene options?:', 'options' in quizzesData[0]);
+        console.log('🔍 [FRONTEND] Options de la primera pregunta:', quizzesData[0]?.options);
+      } else {
+        console.warn('⚠️ [FRONTEND] Array VACÍO - No hay preguntas para este nivel');
       }
+    } else {
+      console.error('❌ [FRONTEND] Error: quizzesData NO es un array');
+      console.error('❌ [FRONTEND] Valor actual:', quizzesData);
     }
     
-    // Continuar con el proceso normal...
+    // PASO 2: Procesar con el adaptador
     if (Array.isArray(quizzesData) && quizzesData.length > 0) {
+      console.log('🔄 [FRONTEND] Pasando datos al adaptador...');
+      const adaptedQuestions = quizAdapter.adaptQuizzes(quizzesData);
+      console.log('🔄 [FRONTEND] Preguntas después del adaptador:', adaptedQuestions);
+      console.log('🔍 [FRONTEND] Número de preguntas adaptadas:', adaptedQuestions.length);
+      
       const adaptedQuiz = {
         id: categoryId,
         title: `Quiz Nivel ${categoryId}`,
-        questions: quizAdapter.adaptQuizzes(quizzesData),
+        questions: adaptedQuestions,
         totalQuestions: quizzesData.length
       };
       
-      console.log('🔄 PASO 1.13 - Quiz después del adaptador:', adaptedQuiz);
-      console.log('🔍 PASO 1.14 - Primera pregunta adaptada:', adaptedQuiz.questions[0]);
-      console.log('🔍 PASO 1.15 - Opciones de la primera pregunta adaptada:', adaptedQuiz.questions[0]?.options);
+      console.log('🔄 [FRONTEND] Quiz adaptado completo:', adaptedQuiz);
       
       if (adaptedQuiz && adaptedQuiz.questions.length > 0) {
         setCurrentQuiz(adaptedQuiz);
         setUserAnswers(new Array(adaptedQuiz.questions.length).fill(null));
+        
+        console.log('✅ [FRONTEND] Quiz cargado exitosamente');
+        console.log('📊 [FRONTEND] Estado final:', {
+          nivel: categoryId,
+          preguntasTotales: adaptedQuiz.questions.length,
+          preguntaActual: 0,     // ← Confirmar que empieza en 0
+          etapaActual: 1,        // ← Confirmar que empieza en 1
+          respuestasInicializadas: adaptedQuiz.questions.length
+        });
       } else {
-        setError('El adaptador no pudo procesar los datos del quiz');
+        const errorMsg = 'El adaptador no pudo procesar los datos del quiz';
+        console.error('❌ [FRONTEND]', errorMsg);
+        setError(errorMsg);
       }
     } else {
-      setError('No se pudieron cargar los quizzes o el array está vacío');
+      const errorMsg = 'No se pudieron cargar los quizzes o el array está vacío';
+      console.error('❌ [FRONTEND]', errorMsg);
+      setError(errorMsg);
     }
     
   } catch (error) {
-    console.error('❌ Error de conexión:', error);
+    console.error('❌ [FRONTEND] Error de conexión:', error);
     setError(`Error de conexión: ${error.message}`);
   } finally {
     setLoading(false);
   }
 };
 
-  // ... (el resto del código de renderizado se mantiene igual)
+  if (loading) {
+    return (
+      <div className="quiz-page">
+        <div className="quiz-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Cargando nivel {level} desde el servidor...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
- return (
+  if (error) {
+    return (
+      <div className="quiz-page">
+        <div className="quiz-container">
+          <div className="error-state">
+            <i className="fas fa-exclamation-triangle"></i>
+            <h3>Error al cargar el quiz</h3>
+            <p>{error}</p>
+            <div className="error-actions">
+              <button onClick={() => loadQuizFromBackend(level)} className="btn btn-primary">
+                Reintentar
+              </button>
+              <button onClick={() => navigate('/')} className="btn btn-outline">
+                Volver al Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentQuiz || !currentQuiz.questions || currentQuiz.questions.length === 0) {
+    return (
+      <div className="quiz-page">
+        <div className="quiz-container">
+          <div className="empty-state">
+            <i className="fas fa-gamepad"></i>
+            <h3>Quiz vacío</h3>
+            <p>El quiz no contiene preguntas o no está configurado correctamente.</p>
+            <button onClick={() => navigate('/')} className="btn btn-primary">
+              Volver al Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <div className="quiz-page">
       <div className="quiz-container">
         <div className="quiz-header">
@@ -390,7 +490,7 @@ const completeQuizAttempt = useCallback(async () => {
         <Timer 
           duration={30} 
           onTimeUp={handleTimeUp} 
-          currentQuestion={currentQuestion} // ← Prop agregada
+          currentQuestion={currentQuestion}
           isLastQuestion={currentQuestion === currentQuiz?.questions?.length - 1}
         />
         <ProgressBar current={currentQuestion + 1} total={currentQuiz?.questions?.length || 1} />
@@ -418,7 +518,7 @@ const completeQuizAttempt = useCallback(async () => {
             />
           )}
 
-          {/* Botón para enviar manualmente - MEJORADO */}
+          {/* Botón para enviar manualmente */}
           {currentQuestion === currentQuiz?.questions?.length - 1 && (
             <div className="quiz-actions" style={{ marginTop: '20px', textAlign: 'center' }}>
               <button 
