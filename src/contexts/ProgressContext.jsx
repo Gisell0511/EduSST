@@ -9,20 +9,23 @@ export function ProgressProvider({ children }) {
     totalStages: 4,
     currentStage: 2,
     totalPoints: 1250,
-    completedQuizzes: 3
+    completedQuizzes: 3,
+    unlockedLevels: [1] // ✅ AGREGAR ESTA PROPIEDAD FALTANTE
   });
 
   const [quizHistory, setQuizHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // ✅ Cargar progreso real del backend
     loadProgressFromBackend();
   }, []);
 
   const loadProgressFromBackend = async () => {
     try {
       setLoading(true);
+      
+      // ✅ CARGAR UNLOCKED LEVELS DESDE LOCALSTORAGE
+      const savedUnlockedLevels = JSON.parse(localStorage.getItem('sst_unlockedLevels') || '[1]');
       
       // ✅ INTENTAR CARGAR ESTADÍSTICAS DEL USUARIO
       try {
@@ -32,48 +35,29 @@ export function ProgressProvider({ children }) {
         if (statsResponse.success && statsResponse.data) {
           const userStats = statsResponse.data;
           
-          // Adaptar según la estructura que devuelve tu backend
           setProgress({
             completedStages: userStats.completedCategories || userStats.completedLevels || 1,
             totalStages: userStats.totalCategories || userStats.totalLevels || 3,
             currentStage: userStats.currentCategory || userStats.currentLevel || 1,
             totalPoints: userStats.totalPoints || userStats.points || 1250,
-            completedQuizzes: userStats.completedQuizzes || userStats.quizzesCompleted || 3
+            completedQuizzes: userStats.completedQuizzes || userStats.quizzesCompleted || 3,
+            unlockedLevels: savedUnlockedLevels // ✅ MANTENER UNLOCKED LEVELS
           });
           
           console.log('✅ Progreso cargado desde backend:', userStats);
         } else {
           console.log('❌ getUserStats no devolvió datos, usando locales');
+          setProgress(prev => ({
+            ...prev,
+            unlockedLevels: savedUnlockedLevels
+          }));
         }
       } catch (error) {
         console.log('🔶 Endpoint getUserStats no disponible, usando datos locales');
-      }
-
-      // ✅ INTENTAR CARGAR PROGRESO POR CATEGORÍA (para niveles específicos)
-      try {
-        // Cargar progreso para cada categoría/nivel
-        const categories = ['1', '2', '3']; // IDs de categorías básico, intermedio, avanzado
-        let totalCompleted = 0;
-        
-        for (const categoryId of categories) {
-          const progressResponse = await api.getUserProgress(categoryId);
-          if (progressResponse.success && progressResponse.data) {
-            const categoryProgress = progressResponse.data;
-            if (categoryProgress.completed || categoryProgress.score >= 70) {
-              totalCompleted++;
-            }
-          }
-        }
-        
-        // Actualizar progreso general basado en categorías completadas
         setProgress(prev => ({
           ...prev,
-          completedStages: totalCompleted,
-          totalStages: categories.length
+          unlockedLevels: savedUnlockedLevels
         }));
-        
-      } catch (error) {
-        console.log('🔶 Endpoints de progreso por categoría no disponibles');
       }
       
     } catch (error) {
@@ -81,6 +65,21 @@ export function ProgressProvider({ children }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ AGREGAR FUNCIÓN PARA DESBLOQUEAR NIVELES
+  const unlockLevel = (levelId) => {
+    const newUnlockedLevels = [...new Set([...progress.unlockedLevels, levelId])];
+    
+    setProgress(prev => ({
+      ...prev,
+      unlockedLevels: newUnlockedLevels
+    }));
+    
+    // Guardar en localStorage
+    localStorage.setItem('sst_unlockedLevels', JSON.stringify(newUnlockedLevels));
+    
+    console.log(`🔓 Nivel ${levelId} desbloqueado. Niveles desbloqueados:`, newUnlockedLevels);
   };
 
   const addPoints = async (points) => {
@@ -92,7 +91,6 @@ export function ProgressProvider({ children }) {
       
       // ✅ OPCIONAL: Intentar sincronizar con backend
       try {
-        // Podrías llamar a un endpoint para actualizar puntos si existe
         // await api.updateUserPoints(points);
       } catch (error) {
         console.log('No se pudo sincronizar puntos con backend');
@@ -118,10 +116,8 @@ export function ProgressProvider({ children }) {
         completedQuizzes: prev.completedQuizzes + 1
       }));
       
-      // ✅ OPCIONAL: Intentar registrar en backend
       if (quizData) {
         try {
-          // Podrías usar check-answer o otro endpoint para registrar el quiz completado
           // await api.checkAnswer(quizData);
         } catch (error) {
           console.log('No se pudo registrar quiz en backend');
@@ -147,6 +143,15 @@ export function ProgressProvider({ children }) {
       const pointsEarned = Math.round((score / totalQuestions) * 100);
       await addPoints(pointsEarned);
 
+      // ✅ DESBLOQUEAR SIGUIENTE NIVEL SI APROBÓ (70% o más)
+      if (score / totalQuestions >= 0.7) {
+        const currentLevel = parseInt(quizId);
+        if (currentLevel < 3) { // Solo si no es el último nivel
+          const nextLevel = currentLevel + 1;
+          unlockLevel(nextLevel);
+        }
+      }
+
       // ✅ ENVIAR RESULTADOS AL BACKEND
       try {
         const submitResult = await api.submitQuiz(quizId, {
@@ -159,7 +164,6 @@ export function ProgressProvider({ children }) {
         if (submitResult.success) {
           console.log('✅ Resultados enviados al backend');
           
-          // Recargar progreso actualizado
           setTimeout(() => {
             loadProgressFromBackend();
           }, 1000);
@@ -181,12 +185,14 @@ export function ProgressProvider({ children }) {
       progress,
       totalPoints: progress.totalPoints,
       completedQuizzes: progress.completedQuizzes,
+      unlockedLevels: progress.unlockedLevels, // ✅ EXPORTAR UNLOCKED LEVELS
       quizHistory,
       loading,
       addPoints,
       completeStage,
       addCompletedQuiz,
       completeQuiz,
+      unlockLevel, // ✅ EXPORTAR LA FUNCIÓN
       refreshProgress: loadProgressFromBackend
     }}>
       {children}

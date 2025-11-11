@@ -131,3 +131,211 @@ body{
   color: #ef4444;
   font-size: 0.85rem;
 }
+
+/* Agrega esto a tu archivo CSS principal */
+.level-selection-page {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 30px 20px;
+}
+
+.level-selection-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.level-selection-header {
+  text-align: center;
+  margin-bottom: 50px;
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.level-selection-header h1 {
+  color: #2c3e50;
+  font-size: 2.8rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.level-selection-header p {
+  color: #7f8c8d;
+  font-size: 1.3rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+.levels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.level-card {
+  background: white;
+  border-radius: 20px;
+  padding: 35px 30px;
+  border-left: 6px solid;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.level-card.unlocked {
+  cursor: pointer;
+}
+
+.level-card.unlocked:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 45px rgba(0,0,0,0.15);
+}
+
+.level-card.locked {
+  opacity: 0.8;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.level-icon {
+  font-size: 4rem;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.level-content h3 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  font-weight: 600;
+  text-align: center;
+}
+
+.level-content p {
+  color: #5a6c7d;
+  margin-bottom: 25px;
+  line-height: 1.6;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.level-features {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-bottom: 20px;
+}
+
+.level-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.level-stat i {
+  color: #4CAF50;
+}
+
+.categories-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.category-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.level-btn {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.level-btn:hover {
+  transform: scale(1.02);
+}
+
+.locked-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.level-lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  backdrop-filter: blur(2px);
+}
+
+.level-lock-overlay i {
+  font-size: 3rem;
+  color: #bdc3c7;
+  margin-bottom: 10px;
+}
+
+.level-lock-overlay p {
+  color: #7f8c8d;
+  font-weight: 600;
+  margin: 0;
+}
+
+.level-selection-footer {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.progression-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.progression-info i {
+  color: #4CAF50;
+  font-size: 1.5rem;
+  margin-top: 3px;
+}
+
+.progression-info div {
+  color: #5a6c7d;
+  line-height: 1.6;
+}
+

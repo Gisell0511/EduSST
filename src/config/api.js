@@ -80,24 +80,34 @@ export const api = {
     return data;
   },
 
-  getQuizzesByCategory: async (categoryId) => {
+getQuizzesByCategory: async (categoryId) => {
   try {
-    console.log(`📡 [API] Obteniendo quizzes para categoría ${categoryId}...`);
-    const response = await fetch(`${API_BASE}/quizzes/category/${categoryId}/quizzes`);
+    console.log(`🔍 [FRONTEND] getQuizzesByCategory RECIBIÓ categoryId:`, categoryId);
+    console.log(`🔍 [FRONTEND] Tipo de categoryId:`, typeof categoryId);
     
-    console.log(`📡 [API] Response status: ${response.status}`);
+    // Validar que categoryId no sea undefined, null, o vacío
+    if (!categoryId && categoryId !== 0) {
+      console.error('❌ [FRONTEND] ERROR: categoryId es undefined/null/vacío');
+      throw new Error('categoryId es requerido');
+    }
+    
+    const url = `${API_BASE}/quizzes?category=${categoryId}`;
+    console.log(`📡 [FRONTEND] URL completa: ${url}`);
+    
+    const response = await fetch(url);
+    
+    console.log(`📡 [FRONTEND] Response status: ${response.status}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
-    console.log(`✅ [API] Quizzes obtenidos: ${data.length} preguntas`);
-    console.log(`🔍 [API] Tipo de data: ${typeof data}, Es array: ${Array.isArray(data)}`);
+    console.log(`✅ [FRONTEND] Quizzes obtenidos: ${data.length} preguntas`);
     
     return data;
   } catch (error) {
-    console.error('❌ [API] Error en getQuizzesByCategory:', error);
+    console.error('❌ [FRONTEND] Error en getQuizzesByCategory:', error);
     throw error;
   }
 },

@@ -46,6 +46,25 @@ const useProgressSimple = () => {
   };
 };
 
+// Agrega esta función ANTES del componente QuizPage
+const mapLevelToCategories = (level) => {
+  // Mapeo de niveles (1,2,3) a rangos de categorías
+  const levelRanges = {
+    1: [1, 2, 3, 4, 5],    // Básico: categorías 1-5
+    2: [6, 7, 8, 9, 10],   // Intermedio: categorías 6-10  
+    3: [11, 12, 13, 14, 15] // Avanzado: categorías 11-15
+  };
+  
+  const categories = levelRanges[level] || [1];
+  // Seleccionar una categoría aleatoria del nivel
+  const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+  
+  console.log(`🎯 Mapeando nivel ${level} a categorías:`, categories);
+  console.log(`🎯 Categoría seleccionada: ${randomCategory}`);
+  
+  return randomCategory;
+};
+
 export default function QuizPage() {
   const { level } = useParams();
   const navigate = useNavigate();
@@ -333,24 +352,28 @@ export default function QuizPage() {
     }
   }, [level]);
 
-  const loadQuizFromBackend = async (categoryId) => {
+  const loadQuizFromBackend = async (levelId) => {
   try {
-    console.log('🔄 [NUEVO QUIZ] Cargando nivel:', categoryId);
+    console.log('🔄 [NUEVO QUIZ] Cargando nivel:', levelId);
     
-    // RESETEAR ESTADOS ANTES DE CARGAR - IMPORTANTE
+    // ✅ CONVERTIR NIVEL A CATEGORÍA
+    const categoryId = mapLevelToCategories(parseInt(levelId));
+    console.log(`🎯 [FRONTEND] Nivel ${levelId} → Categoría ${categoryId}`);
+    
+    // RESETEAR ESTADOS ANTES DE CARGAR
     setLoading(true);
     setError(null);
-    setCurrentQuiz(null);           // ← Limpiar quiz anterior
-    setCurrentQuestion(0);          // ← Volver a pregunta 1 (índice 0)
-    setStage(1);                    // ← Volver a etapa 1  
-    setUserAnswers([]);             // ← Limpiar respuestas anteriores
-    setShowModal(false);            // ← Cerrar modales abiertos
-    setIsQuizCompleted(false);      // ← Resetear estado de completado
-    setQuizResult(null);            // ← Limpiar resultados anteriores
+    setCurrentQuiz(null);
+    setCurrentQuestion(0);
+    setStage(1);
+    setUserAnswers([]);
+    setShowModal(false);
+    setIsQuizCompleted(false);
+    setQuizResult(null);
 
     console.log('🎯 [FRONTEND] Estados reseteados - Iniciando carga...');
     
-    // PASO 1: Llamar al API
+    // ✅ PASO 1: Llamar al API CON LA CATEGORÍA CORRECTA
     const quizzesData = await api.getQuizzesByCategory(categoryId);
     console.log('📦 [FRONTEND] Respuesta CRUDA del backend:', quizzesData);
     console.log('🔍 [FRONTEND] Tipo de datos:', typeof quizzesData);
@@ -361,26 +384,19 @@ export default function QuizPage() {
       
       if (quizzesData.length > 0) {
         console.log('🔍 [FRONTEND] Primera pregunta:', quizzesData[0]);
-        console.log('🔍 [FRONTEND] Tiene options?:', 'options' in quizzesData[0]);
-        console.log('🔍 [FRONTEND] Options de la primera pregunta:', quizzesData[0]?.options);
       } else {
-        console.warn('⚠️ [FRONTEND] Array VACÍO - No hay preguntas para este nivel');
+        console.warn('⚠️ [FRONTEND] Array VACÍO - No hay preguntas para esta categoría');
       }
-    } else {
-      console.error('❌ [FRONTEND] Error: quizzesData NO es un array');
-      console.error('❌ [FRONTEND] Valor actual:', quizzesData);
     }
     
     // PASO 2: Procesar con el adaptador
     if (Array.isArray(quizzesData) && quizzesData.length > 0) {
       console.log('🔄 [FRONTEND] Pasando datos al adaptador...');
       const adaptedQuestions = quizAdapter.adaptQuizzes(quizzesData);
-      console.log('🔄 [FRONTEND] Preguntas después del adaptador:', adaptedQuestions);
-      console.log('🔍 [FRONTEND] Número de preguntas adaptadas:', adaptedQuestions.length);
       
       const adaptedQuiz = {
-        id: categoryId,
-        title: `Quiz Nivel ${categoryId}`,
+        id: categoryId, // ← Usar categoryId en lugar de levelId
+        title: `Quiz ${levelId === '1' ? 'Básico' : levelId === '2' ? 'Intermedio' : 'Avanzado'}`,
         questions: adaptedQuestions,
         totalQuestions: quizzesData.length
       };
@@ -393,11 +409,9 @@ export default function QuizPage() {
         
         console.log('✅ [FRONTEND] Quiz cargado exitosamente');
         console.log('📊 [FRONTEND] Estado final:', {
-          nivel: categoryId,
-          preguntasTotales: adaptedQuiz.questions.length,
-          preguntaActual: 0,     // ← Confirmar que empieza en 0
-          etapaActual: 1,        // ← Confirmar que empieza en 1
-          respuestasInicializadas: adaptedQuiz.questions.length
+          nivel: levelId,
+          categoria: categoryId,
+          preguntasTotales: adaptedQuiz.questions.length
         });
       } else {
         const errorMsg = 'El adaptador no pudo procesar los datos del quiz';
@@ -405,7 +419,7 @@ export default function QuizPage() {
         setError(errorMsg);
       }
     } else {
-      const errorMsg = 'No se pudieron cargar los quizzes o el array está vacío';
+      const errorMsg = `No se encontraron quizzes para el nivel ${levelId} (categoría ${categoryId})`;
       console.error('❌ [FRONTEND]', errorMsg);
       setError(errorMsg);
     }
